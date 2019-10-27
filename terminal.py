@@ -389,7 +389,6 @@ class GeditTerminalPanel(Gtk.Box):
         return True
         
     def change_to_current_directory(self, *args):
-        self.no_of_handlers_and_destroy()
         directory = self.plugin.get_active_document_directory()
         if directory:
             self.change_directory(directory)
