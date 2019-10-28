@@ -446,8 +446,8 @@ class TerminalAppActivatable(GObject.Object, Gedit.AppActivatable):
             self.app.set_accels_for_action(action, [])
 
 
-class TerminalPlugin(GObject.Object, Gedit.WindowActivatable):
-    __gtype_name__ = "TerminalPlugin"
+class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
+    __gtype_name__ = "TerminalEnhancedPlugin"
 
     window = GObject.Property(type=Gedit.Window)
 

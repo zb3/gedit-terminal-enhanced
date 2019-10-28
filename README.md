@@ -10,10 +10,8 @@ Slightly modified version of the original terminal plugin. Modifications include
 * <kbd>Ctrl</kbd> + <kbd>Click</kbd> functionality currently requires patched version of PyGObject (see https://gitlab.gnome.org/GNOME/pygobject/issues/366)
 * File names are read as relative to current working directory of the terminal process, so when it changes, previous names won't work.
 * It currently uses linux-specific `/proc/PID/cwd` to get the cwd of the terminal process.
-* The original plugin must be disabled first.
 
 ## Installation
 * Copy project folder to `~/.local/share/gedit/plugins`
-* Disable the original plugin (this one uses the same class name)
-* Enable this one (you didn't see it coming, did you?)
+* Enable this plugin (you didn't see it coming, did you?)
 * ~~Uninstall~~ Enjoy :)

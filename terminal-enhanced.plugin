@@ -1,6 +1,6 @@
 [Plugin]
 Loader=python3
-Module=terminal
+Module=terminal-enhanced
 IAge=3
 Name[ar]=اغرس طرفية
 Name[be]=Убудаваны тэрмінал
