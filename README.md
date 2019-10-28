@@ -16,3 +16,10 @@ Slightly modified version of the original terminal plugin. Modifications include
 * Copy project folder to `~/.local/share/gedit/plugins`
 * Enable this plugin (you didn't see it coming, did you?)
 * ~~Uninstall~~ Enjoy :)
+
+## Message API
+The `/plugins/terminalenhanced/feed-string(str)` method allows other plugins to feed a string into the terminal. This also activates the proper tab and sets the focus to the terminal widget. Use it like this:
+```python
+# bus is a Gedit.MessageBus object
+bus.send('/plugins/terminalenhanced', 'feed-string', str='grep -rn example\n')
+```

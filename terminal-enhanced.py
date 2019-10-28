@@ -331,15 +331,17 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
                        None,
                        0, Gtk.get_current_event_time())
             self.menu.select_first(False)
+            
+    def feed_string(self, string):
+        self._vte.feed_child(string.encode('utf-8'))
+        self._vte.grab_focus()
 
     def feed_path(self, path):
-        self._vte.feed_child(("'" + path + "'").encode('utf-8'))
-        self._vte.grab_focus()
+        self.feed_string("'" + path + "'")
 
     def change_directory(self, path):
         path = path.replace('\\', '\\\\').replace('"', '\\"')
-        self._vte.feed_child(('cd "%s"\n' % path).encode('utf-8'))
-        self._vte.grab_focus()
+        self.feed_string('cd "%s"\n' % path)
         
     def do_grab_focus(self):
         self._vte.grab_focus()
@@ -486,12 +488,15 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
 
     window = GObject.Property(type=Gedit.Window)
 
+    class FeedString(Gedit.Message):
+        str = GObject.Property(type=str)
+
     def __init__(self):
         GObject.Object.__init__(self)
    
     def do_activate(self):        
         action = Gio.SimpleAction(name="focus-on-terminal")
-        action.connect('activate', self.on_focus)
+        action.connect('activate', lambda a, p: self.focus_terminal())
         self.window.add_action(action)
         
         self._panel = GeditTerminalEnhancedPanel(self)
@@ -501,11 +506,23 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         bottom = self.window.get_bottom_panel()
         bottom.add_titled(self._panel, "GeditTerminalEnhancedPanel", _("Terminal"))
 
+        bus = self.window.get_message_bus()
+        bus.register(self.FeedString, '/plugins/terminalenhanced', 'feed-string')
+
+        self.signal_ids = []
+        self.signal_ids.append(bus.connect('/plugins/terminalenhanced', 'feed-string', self.on_feed_string_message, None))
 
     def do_deactivate(self):
+        self.window.remove_action("focus-on-terminal")
+
         bottom = self.window.get_bottom_panel()
         bottom.remove(self._panel)
-        self.window.remove_action("focus-on-terminal")
+
+        bus = self.window.get_message_bus()
+        for sid in self.signal_ids:
+            bus.disconnect(sid)
+
+        bus.unregister_all('/plugins/terminalenhanced')
 
     def do_update_state(self):
         pass
@@ -523,10 +540,14 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         if doc:
             return os.path.dirname(doc)
         return None
-        
-    def on_focus(self, action, parameter, user_data=None):
+
+    def focus_terminal(self):
         self.window.get_bottom_panel().set_visible_child_name("GeditTerminalEnhancedPanel")
         self._panel.grab_focus()
+
+    def on_feed_string_message(self, bus, message, user_data):
+        self.focus_terminal()
+        self._panel.feed_string(message.props.str)
 
     def on_vte_file_clicked(self, term, filename, line):
         if os.path.exists(filename):
