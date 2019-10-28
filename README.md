@@ -12,6 +12,7 @@ Slightly modified version of the original terminal plugin. Modifications include
 * It currently uses linux-specific `/proc/PID/cwd` to get the cwd of the terminal process.
 
 ## Installation
+* Make sure the original terminal plugin is available (it's in the `gedit-plugins` package)
 * Copy project folder to `~/.local/share/gedit/plugins`
 * Enable this plugin (you didn't see it coming, did you?)
 * ~~Uninstall~~ Enjoy :)
