@@ -22,14 +22,17 @@
 
 import os
 import re
+import subprocess
 
 import time
 
 import gi
 gi.require_version('Gedit', '3.0')
+gi.require_version('Peas', '1.0')
+gi.require_version('PeasGtk', '1.0')
 gi.require_version('Gtk', '3.0')
 gi.require_version('Vte', '2.91')
-from gi.repository import GObject, GLib, Gio, Pango, Gdk, Gtk, Gedit, Vte
+from gi.repository import GObject, GLib, Gio, Pango, Gdk, Gtk, Gedit, Vte, Peas, PeasGtk
 
 try:
     import gettext
@@ -38,6 +41,23 @@ try:
     _ = gettext.gettext
 except:
     _ = lambda s: s
+
+SCHEMAS_PATH = os.path.join(os.path.dirname(__file__), 'schemas')
+
+schema_source = None
+
+def get_gio_settings(schema_id):
+    global schema_source
+
+    if schema_source is None:
+        schema_source = Gio.SettingsSchemaSource.new_from_directory(SCHEMAS_PATH, Gio.SettingsSchemaSource.get_default(), False)
+
+        if not schema_source:
+            raise Exception('no schema source')
+
+    schema = schema_source.lookup(schema_id, False)
+    return Gio.Settings.new_full(schema, None, None)
+
 
 class GeditTerminal(Vte.Terminal):
 
@@ -119,7 +139,7 @@ class GeditTerminal(Vte.Terminal):
             settings = Gio.Settings.new_with_path("org.gnome.Terminal.Legacy.Profile",
                                                   default_path)
         else:
-            settings = Gio.Settings.new("org.gnome.gedit.plugins.terminal")
+            settings = get_gio_settings("pl.zb3.gedit.terminal-enhanced.profile")
 
         return settings
 
@@ -420,7 +440,7 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
         
     
   
-class TerminalAppActivatable(GObject.Object, Gedit.AppActivatable):
+class TerminalAppActivatable(GObject.Object, Gedit.AppActivatable, PeasGtk.Configurable):
     app = GObject.Property(type=Gedit.App)
     
     __instance = None
@@ -444,6 +464,21 @@ class TerminalAppActivatable(GObject.Object, Gedit.AppActivatable):
     def deactivate(self):
         for accel, action in self.accelerators:
             self.app.set_accels_for_action(action, [])
+
+    def invoke_dconf_editor(self):
+        env = os.environ.copy()
+        env['GSETTINGS_SCHEMA_DIR'] = SCHEMAS_PATH
+        subprocess.Popen(['dconf-editor', '/pl/zb3/gedit/terminal-enhanced/profile'], env=env)
+
+    def do_create_configure_widget(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        box.set_border_width(20)
+
+        button = Gtk.Button.new_with_label("Edit profile settings using dconf-editor")
+        button.connect('clicked', lambda x: self.invoke_dconf_editor())
+        box.pack_start(button, True, False, 0)
+
+        return box
 
 
 class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
