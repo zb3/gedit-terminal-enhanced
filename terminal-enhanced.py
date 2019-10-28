@@ -209,7 +209,7 @@ class GeditTerminal(Vte.Terminal):
          vadj.set_value(vadj.get_value() + delta*self.XTRA_SCROLL_LINES*vadj.get_step_increment())
         
 
-class GeditTerminalPanel(Gtk.Box):
+class GeditTerminalEnhancedPanel(Gtk.Box):
     """VTE terminal which follows gnome-terminal default profile options"""
 
     __gsignals__ = {
@@ -459,12 +459,12 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         action.connect('activate', self.on_focus)
         self.window.add_action(action)
         
-        self._panel = GeditTerminalPanel(self)
+        self._panel = GeditTerminalEnhancedPanel(self)
         self._panel.connect("file-clicked", self.on_vte_file_clicked)
         self._panel.show()
 
         bottom = self.window.get_bottom_panel()
-        bottom.add_titled(self._panel, "GeditTerminalPanel", _("Terminal"))
+        bottom.add_titled(self._panel, "GeditTerminalEnhancedPanel", _("Terminal"))
 
 
     def do_deactivate(self):
@@ -490,7 +490,7 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         return None
         
     def on_focus(self, action, parameter, user_data=None):
-        self.window.get_bottom_panel().set_visible_child_name("GeditTerminalPanel")
+        self.window.get_bottom_panel().set_visible_child_name("GeditTerminalEnhancedPanel")
         self._panel.grab_focus()
 
     def on_vte_file_clicked(self, term, filename, line):
