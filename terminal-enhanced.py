@@ -505,6 +505,7 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
 
         bottom = self.window.get_bottom_panel()
         bottom.add_titled(self._panel, "GeditTerminalEnhancedPanel", _("Terminal"))
+        bottom.set_visible_child(self._panel)
 
         bus = self.window.get_message_bus()
         bus.register(self.FeedString, '/plugins/terminalenhanced', 'feed-string')
