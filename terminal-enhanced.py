@@ -366,13 +366,15 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
             # feed ^W which corresponds to 0x17
             self.feed_string(chr(0x17))
             return True
-                
+
+        # Special case some Vte.Terminal shortcuts
+        # so the global shortcuts do not override them
+        if event.keyval == Gdk.KEY_Delete:
+            return False
          
         if modifiers & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK):
             keyval_name = Gdk.keyval_name(Gdk.keyval_to_upper(event.keyval))
 
-            # Special case some Vte.Terminal shortcuts
-            # so the global shortcuts do not override them
             if modifiers == Gdk.ModifierType.CONTROL_MASK and keyval_name in 'ACDEHKLRTUWZ':
                 return False
 
@@ -390,7 +392,6 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
                 if action.startswith('term.'):
                     self.actions[action[len('term.'):]].activate()
                     return True
-
 
         # now we'll give other accelerators a chance, to reverse gedit's behaviour
         return self.get_toplevel().activate_key(event)
