@@ -22,6 +22,7 @@
 
 import os
 import re
+import shlex
 import subprocess
 
 import time
@@ -512,11 +513,12 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         bottom.add_titled(self._panel, "GeditTerminalEnhancedPanel", _("Terminal"))
         bottom.set_visible_child(self._panel)
 
-        bus = self.window.get_message_bus()
-        bus.register(self.FeedString, '/plugins/terminalenhanced', 'feed-string')
+        self.bus = self.window.get_message_bus()
+        self.bus.register(self.FeedString, '/plugins/terminalenhanced', 'feed-string')
 
         self.signal_ids = []
-        self.signal_ids.append(bus.connect('/plugins/terminalenhanced', 'feed-string', self.on_feed_string_message, None))
+        self.signal_ids.append(self.bus.connect('/plugins/terminalenhanced', 'feed-string', self.on_feed_string_message, None))
+        self.install_filebrowser_extension()
 
     def do_deactivate(self):
         self.window.remove_action("focus-on-terminal")
@@ -524,11 +526,40 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         bottom = self.window.get_bottom_panel()
         bottom.remove(self._panel)
 
-        bus = self.window.get_message_bus()
         for sid in self.signal_ids:
-            bus.disconnect(sid)
+            self.bus.disconnect(sid)
 
-        bus.unregister_all('/plugins/terminalenhanced')
+        self.bus.unregister_all('/plugins/terminalenhanced')
+        self.uninstall_filebrowser_extension()
+
+    def install_filebrowser_extension(self):
+        self.fb_menu_extension = None
+
+        if self.bus.is_registered('/plugins/filebrowser', 'extend_context_menu'):
+            msg = self.bus.send_sync('/plugins/filebrowser', 'extend_context_menu')
+            self.fb_menu_extension = msg.props.extension
+
+            action = Gio.SimpleAction(name='fb-paste-to-terminal')
+            action.connect("activate", self.on_fb_paste_to_terminal)
+            self.window.add_action(action)
+
+            item = Gio.MenuItem.new(_("Paste name into the terminal"), 'win.fb-paste-to-terminal')
+            self.fb_menu_extension.append_menu_item(item)
+
+            action = Gio.SimpleAction(name='fb-change-terminal-dir')
+            action.connect("activate", self.on_fb_change_terminal_dir)
+            self.window.add_action(action)
+
+            item = Gio.MenuItem.new(_("Change terminal directory to this"), 'win.fb-change-terminal-dir')
+            self.fb_menu_extension.append_menu_item(item)
+
+    def uninstall_filebrowser_extension(self):
+        if self.fb_menu_extension:
+            self.window.remove_action('win.fb-paste-to-terminal')
+            self.window.remove_action('win.fb-change-terminal-dir')
+
+            self.fb_menu_extension = None
+
 
     def do_update_state(self):
         pass
@@ -547,6 +578,26 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
             return os.path.dirname(doc)
         return None
 
+    def get_fb_selected_paths(self):
+        try:
+            view = self.bus.send_sync('/plugins/filebrowser', 'get_view').props.view
+        except TypeError:
+            return []
+
+        model, rows = view.get_selection().get_selected_rows()
+        paths = []
+
+        for row in rows:
+            gfile = model.get_value(model.get_iter(row), 3)
+            paths.append(gfile.get_path())
+
+        if not paths:
+            msg = self.bus.send_sync('/plugins/filebrowser', 'get_root')
+            paths.append(msg.props.location.get_path())
+
+        return paths
+
+
     def focus_terminal(self):
         self.window.get_bottom_panel().set_visible_child_name("GeditTerminalEnhancedPanel")
         self._panel.grab_focus()
@@ -559,6 +610,21 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         if os.path.exists(filename):
             gio_file = Gio.File.new_for_path(filename)
             Gedit.commands_load_location(self.window, gio_file, None, line, -1)
+
+    def on_fb_paste_to_terminal(self, action, param):
+        paths = self.get_fb_selected_paths()
+
+        self._panel.feed_string(' '.join([shlex.quote(p) for p in paths]))
+
+    def on_fb_change_terminal_dir(self, action, param):
+        paths = self.get_fb_selected_paths()
+        if paths:
+            path = paths[0]
+            if not os.path.isdir(path):
+                path = os.path.dirname(path)
+
+            self._panel.feed_string('cd '+shlex.quote(path)+'\n')
+
 
 # Let's conform to PEP8
 # ex:ts=4:et:
