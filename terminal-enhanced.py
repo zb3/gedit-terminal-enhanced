@@ -67,7 +67,7 @@ class GeditTerminal(Vte.Terminal):
 
     TARGET_URI_LIST = 200
     XTRA_SCROLL_LINES = 2
-    
+
     VTE_REGEX_FLAGS =  0x400
 
     #HIGHLIGHT_REGEX_STR = r'''([^:(),"'\s]*?[/.][^:(),"'\s]*)(:\d+)?:?'''
@@ -77,7 +77,7 @@ class GeditTerminal(Vte.Terminal):
     HIGHLIGHT_VREGEX = Vte.Regex.new_for_match(HIGHLIGHT_REGEX_STR, len(HIGHLIGHT_REGEX_STR), VTE_REGEX_FLAGS)
     CLICK_VREGEX = Vte.Regex.new_for_match(CLICK_REGEX_STR, len(CLICK_REGEX_STR), VTE_REGEX_FLAGS)
     CLICK_PATTERN = re.compile(CLICK_REGEX_STR)
-    
+
     __gsignals__ = {
         "file-clicked": (
             GObject.SignalFlags.RUN_LAST,
@@ -111,7 +111,7 @@ class GeditTerminal(Vte.Terminal):
         self.match_add_regex(self.HIGHLIGHT_VREGEX, 0)
         self.connect("button-press-event", self.on_button_press)
         self.connect('text-scrolled', self.on_text_scroll)
-        
+
 
     def do_drag_data_received(self, drag_context, x, y, data, info, time):
         if info == self.TARGET_URI_LIST:
@@ -204,30 +204,30 @@ class GeditTerminal(Vte.Terminal):
 
     def on_profile_settings_changed(self, settings, key):
         self.reconfigure_vte()
-        
+
     def get_cwd(self):
         return os.readlink('/proc/%s/cwd' % self.child_pid)
-        
+
     def on_button_press(self, term, event):
         if event.button == 1 and (event.state & Gdk.ModifierType.CONTROL_MASK):
             has_match, matches = self.event_check_regex_simple(event, [self.CLICK_VREGEX], 0)
-          
+
             if has_match:
                 match = self.CLICK_PATTERN.match(matches[0])
-                
+
                 filename = os.path.join(self.get_cwd(), match.group(1))
                 line = int(match.group(2) or 0)
-                
+
                 self.emit("file-clicked", filename, line)
                 return True
-            
+
         return False
-        
+
     def on_text_scroll(self, term, delta):
       if delta in (-1, 1):
          vadj = self.get_vadjustment()
          vadj.set_value(vadj.get_value() + delta*self.XTRA_SCROLL_LINES*vadj.get_step_increment())
-        
+
 
 class GeditTerminalEnhancedPanel(Gtk.Box):
     """VTE terminal which follows gnome-terminal default profile options"""
@@ -242,14 +242,14 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
 
     def __init__(self, plugin):
         Gtk.Box.__init__(self)
-        
+
         self.plugin = plugin
-        
+
         self.add_terminal()
-        self.create_action_group()            
+        self.create_action_group()
         self.create_popup_menu()
 
-        
+
     def add_terminal(self):
         self._vte = GeditTerminal()
         self._vte.show()
@@ -261,7 +261,7 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
         self._vte.connect("popup-menu", self.on_vte_popup_menu)
         self._vte.connect("file-clicked", self.on_vte_file_clicked)
         self._vte.connect("focus-in-event", self.on_vte_focus)
-        
+
         scrollbar = Gtk.Scrollbar.new(Gtk.Orientation.VERTICAL, self._vte.get_vadjustment())
         scrollbar.show()
         self.pack_start(scrollbar, False, False, 0)
@@ -269,18 +269,18 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
     def create_action_group(self):
         self.action_group = Gio.SimpleActionGroup()
         self.actions = {}
-        
+
         actions = (
             ('change-directory', self.change_to_current_directory),
             ('copy-clipboard', self.copy_clipboard),
             ('paste-clipboard', self.paste_clipboard),
             ('paste-current-file', self.paste_current_file),
         )
-        
+
         for name, callback in actions:
             action = Gio.SimpleAction.new(name, None)
             action.connect('activate', callback)
-            
+
             self.actions[name] = action
             self.action_group.add_action(action)
 
@@ -290,39 +290,39 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
         section = Gio.Menu()
         section.append(_("C_hange Directory"), "term.change-directory")
         model.append_section(None, section)
-      
+
         section = Gio.Menu()
         section.append(_("_Copy"), "term.copy-clipboard")
         section.append(_("_Paste"), "term.paste-clipboard")
         model.append_section(None, section)
-        
+
         section = Gio.Menu()
         section.append(_("Paste current f_ile"), "term.paste-current-file")
         model.append_section(None, section)
-        
+
         self.menu = Gtk.Menu.new_from_model(model)
         self.menu.attach_to_widget(self, None)
         self.menu.insert_action_group('term', self.action_group)
 
-  
+
     def update_action_state(self, enable_all=False):
         # we only update the state when we need it. so before showing a popup, we want to enable
         # only usable actions, but then all keys should work without us listening for state changes
-    
+
         if enable_all:
             for action in self.actions:
                 self.actions[action].set_enabled(True)
-        else:         
+        else:
             directory = self.plugin.get_active_document_directory()
             path = self.plugin.get_active_document_path()
-            
+
             self.actions['change-directory'].set_enabled(directory is not None)
             self.actions['copy-clipboard'].set_enabled(self._vte.get_has_selection())
             self.actions['paste-current-file'].set_enabled(path is not None)
 
     def show_popup(self, event = None):
         self.update_action_state()
-        
+
         if event is not None:
             self.menu.popup(None, None, None, None, event.button, event.time)
         else:
@@ -331,7 +331,7 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
                        None,
                        0, Gtk.get_current_event_time())
             self.menu.select_first(False)
-            
+
     def feed_string(self, string):
         self._vte.feed_child(string.encode('utf-8'))
         self._vte.grab_focus()
@@ -342,14 +342,14 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
     def change_directory(self, path):
         path = path.replace('\\', '\\\\').replace('"', '\\"')
         self.feed_string('cd "%s"\n' % path)
-        
+
     def do_grab_focus(self):
         self._vte.grab_focus()
-        
+
     def on_vte_key_press(self, term, event):
         # gedit overrides the default GtkWindow event handling mechanism, so we get events
         # before accelerators which 'd normally not be the case
-        
+
         # the goal of this function is to handle our accelerators and partially reverse this process
         # so that VTE doesn't consume everything.
 
@@ -371,7 +371,7 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
         # so the global shortcuts do not override them
         if event.keyval == Gdk.KEY_Delete:
             return False
-         
+
         if modifiers & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK):
             keyval_name = Gdk.keyval_name(Gdk.keyval_to_upper(event.keyval))
 
@@ -380,14 +380,14 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
 
             if modifiers == Gdk.ModifierType.MOD1_MASK and keyval_name in 'BF':
                 return False
-                
+
             # very ugly hack: handle our accelerators manually
             # it must be done, because it's not that actions in our namespace are checked
             # first, so other plugins' accelerators override our terminal-local ones
-            
+
             accel = Gtk.accelerator_name(event.keyval, modifiers)
             actions = self.get_toplevel().get_application().get_actions_for_accel(accel)
-            
+
             for action in actions:
                 if action.startswith('term.'):
                     self.actions[action[len('term.'):]].activate()
@@ -395,24 +395,24 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
 
         # now we'll give other accelerators a chance, to reverse gedit's behaviour
         return self.get_toplevel().activate_key(event)
-        
+
     def on_vte_child_exited(self, term, status):
         for child in self.get_children():
             child.destroy()
 
         self.add_terminal()
         self._vte.grab_focus()
-        
+
     def on_vte_focus(self, term, arg):
         # re-enable all keys, we could also do this on keypress
         self.update_action_state(True)
 
     def on_vte_popup_menu(self, term):
         self.show_popup()
-        
+
     def on_vte_file_clicked(self, term, filename, line):
         self.emit('file-clicked', filename, line)
-        
+
     def on_vte_button_press(self, term, event):
         if event.button == 3:
             self._vte.grab_focus()
@@ -420,9 +420,9 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
             return True
 
         return False
-        
+
     # methods below are called by accelerators, they need to handle *args and return True
-        
+
     def copy_clipboard(self, *args):
         self._vte.copy_clipboard()
         self._vte.grab_focus()
@@ -432,29 +432,29 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
         self._vte.paste_clipboard()
         self._vte.grab_focus()
         return True
-        
+
     def change_to_current_directory(self, *args):
         directory = self.plugin.get_active_document_directory()
         if directory:
             self.change_directory(directory)
         return True
-            
+
     def paste_current_file(self, *args):
         path = self.plugin.get_active_document_path()
         if path:
             self.feed_path(path)
         return True
-        
-    
-  
+
+
+
 class TerminalAppActivatable(GObject.Object, Gedit.AppActivatable, PeasGtk.Configurable):
     app = GObject.Property(type=Gedit.App)
-    
+
     __instance = None
-    
+
     def __init__(self):
         super().__init__()
-        
+
         self.accelerators = (
             ('<Primary><Shift>D', 'term.change-directory'),
             ('<Primary><Shift>C', 'term.copy-clipboard'),
@@ -466,7 +466,7 @@ class TerminalAppActivatable(GObject.Object, Gedit.AppActivatable, PeasGtk.Confi
     def do_activate(self):
         for accel, action in self.accelerators:
             self.app.set_accels_for_action(action, (accel,))
-        
+
 
     def deactivate(self):
         for accel, action in self.accelerators:
@@ -498,12 +498,12 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
 
     def __init__(self):
         GObject.Object.__init__(self)
-   
-    def do_activate(self):        
+
+    def do_activate(self):
         action = Gio.SimpleAction(name="focus-on-terminal")
         action.connect('activate', lambda a, p: self.focus_terminal())
         self.window.add_action(action)
-        
+
         self._panel = GeditTerminalEnhancedPanel(self)
         self._panel.connect("file-clicked", self.on_vte_file_clicked)
         self._panel.show()
@@ -540,7 +540,7 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
             if location and location.has_uri_scheme("file"):
                 return location.get_path()
         return None
-        
+
     def get_active_document_directory(self):
         doc = self.get_active_document_path()
         if doc:
