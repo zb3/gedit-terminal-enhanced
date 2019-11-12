@@ -5,6 +5,7 @@ Slightly modified version of the original terminal plugin. Modifications include
 * <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> to paste currently edited file
 * <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> to change current directory to the one containing currently edited file (via `cd`)
 * Mouse wheel scrolls 3 lines at a time instead of only one.
+* <kbd>Ctrl</kbd> + <kbd>Backspace</kbd> works like <kbd>Ctrl</kbd> + <kbd>W</kbd>
 
 ### Notes
 * <kbd>Ctrl</kbd> + <kbd>Click</kbd> functionality currently requires patched version of PyGObject (see https://gitlab.gnome.org/GNOME/pygobject/issues/366)

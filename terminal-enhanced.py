@@ -353,7 +353,7 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
         # the goal of this function is to handle our accelerators and partially reverse this process
         # so that VTE doesn't consume everything.
 
-        # special case TAB keys
+        # special case TAB / backspace keys
         modifiers = event.state & Gtk.accelerator_get_default_mod_mask()
         if event.keyval in (Gdk.KEY_Tab, Gdk.KEY_KP_Tab, Gdk.KEY_ISO_Left_Tab):
             if modifiers == Gdk.ModifierType.CONTROL_MASK:
@@ -362,6 +362,10 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
             elif modifiers == Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK:
                 self.get_toplevel().child_focus(Gtk.DirectionType.TAB_BACKWARD)
                 return True
+        elif event.keyval == Gdk.KEY_BackSpace and modifiers == Gdk.ModifierType.CONTROL_MASK:
+            # feed ^W which corresponds to 0x17
+            self.feed_string(chr(0x17))
+            return True
                 
          
         if modifiers & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK):
