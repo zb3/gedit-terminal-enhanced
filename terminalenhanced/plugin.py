@@ -27,12 +27,6 @@ import subprocess
 
 import time
 
-import gi
-gi.require_version('Gedit', '3.0')
-gi.require_version('Peas', '1.0')
-gi.require_version('PeasGtk', '1.0')
-gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
 from gi.repository import GObject, GLib, Gio, Pango, Gdk, Gtk, Gedit, Vte, Peas, PeasGtk
 
 try:
