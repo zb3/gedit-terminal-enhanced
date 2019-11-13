@@ -185,14 +185,6 @@ class GeditTerminal(Vte.Terminal):
 class GeditTerminalEnhancedPanel(Gtk.Box):
     """VTE terminal which follows gnome-terminal default profile options"""
 
-    __gsignals__ = {
-        "file-clicked": (
-            GObject.SignalFlags.RUN_LAST,
-            None,
-            (GObject.TYPE_STRING,GObject.TYPE_INT,)
-        )
-    }
-
     def __init__(self, plugin):
         Gtk.Box.__init__(self)
 
@@ -364,7 +356,7 @@ class GeditTerminalEnhancedPanel(Gtk.Box):
         self.show_popup()
 
     def on_vte_file_clicked(self, term, filename, line):
-        self.emit('file-clicked', filename, line)
+        self.plugin.open_file(filename, line)
 
     def on_vte_button_press(self, term, event):
         if event.button == 3:

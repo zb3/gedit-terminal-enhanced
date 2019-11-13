@@ -84,7 +84,6 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         self.window.add_action(action)
 
         self._panel = GeditTerminalEnhancedPanel(self)
-        self._panel.connect("file-clicked", self.on_vte_file_clicked)
         self._panel.show()
 
         bottom = self.window.get_bottom_panel()
@@ -203,7 +202,7 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         self.window.get_bottom_panel().set_visible_child_name("GeditTerminalEnhancedPanel")
         self._panel.grab_focus()
 
-    def on_vte_file_clicked(self, term, filename, line):
+    def open_file(self, filename, line):
         if os.path.exists(filename):
             gio_file = Gio.File.new_for_path(filename)
             Gedit.commands_load_location(self.window, gio_file, None, line, -1)
