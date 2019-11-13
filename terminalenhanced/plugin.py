@@ -92,10 +92,8 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         bottom.set_visible_child(self._panel)
 
         self.bus = self.window.get_message_bus()
-        self.bus.register(self.FeedString, '/plugins/terminalenhanced', 'feed-string')
 
-        self.signal_ids = []
-        self.signal_ids.append(self.bus.connect('/plugins/terminalenhanced', 'feed-string', self.on_feed_string_message, None))
+        self.register_messages()
         self.install_filebrowser_extension()
 
     def do_deactivate(self):
@@ -104,11 +102,27 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         bottom = self.window.get_bottom_panel()
         bottom.remove(self._panel)
 
+        self.unregiser_messages()
+        self.uninstall_filebrowser_extension()
+
+    def do_update_state(self):
+        pass
+
+    def register_messages(self):
+        self.bus.register(self.FeedString, '/plugins/terminalenhanced', 'feed-string')
+
+        self.signal_ids = []
+        self.signal_ids.append(self.bus.connect('/plugins/terminalenhanced', 'feed-string', self.on_feed_string_message, None))
+
+    def unregister_messages(self):
         for sid in self.signal_ids:
             self.bus.disconnect(sid)
 
         self.bus.unregister_all('/plugins/terminalenhanced')
-        self.uninstall_filebrowser_extension()
+
+    def on_feed_string_message(self, bus, message, user_data):
+        self.focus_terminal()
+        self._panel.feed_string(message.props.str)
 
     def install_filebrowser_extension(self):
         self.fb_menu_extension = None
@@ -138,24 +152,6 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
 
             self.fb_menu_extension = None
 
-
-    def do_update_state(self):
-        pass
-
-    def get_active_document_path(self):
-        doc = self.window.get_active_document()
-        if doc:
-            location = doc.get_file().get_location()
-            if location and location.has_uri_scheme("file"):
-                return location.get_path()
-        return None
-
-    def get_active_document_directory(self):
-        doc = self.get_active_document_path()
-        if doc:
-            return os.path.dirname(doc)
-        return None
-
     def get_fb_selected_paths(self):
         try:
             view = self.bus.send_sync('/plugins/filebrowser', 'get_view').props.view
@@ -175,20 +171,6 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
 
         return paths
 
-
-    def focus_terminal(self):
-        self.window.get_bottom_panel().set_visible_child_name("GeditTerminalEnhancedPanel")
-        self._panel.grab_focus()
-
-    def on_feed_string_message(self, bus, message, user_data):
-        self.focus_terminal()
-        self._panel.feed_string(message.props.str)
-
-    def on_vte_file_clicked(self, term, filename, line):
-        if os.path.exists(filename):
-            gio_file = Gio.File.new_for_path(filename)
-            Gedit.commands_load_location(self.window, gio_file, None, line, -1)
-
     def on_fb_paste_to_terminal(self, action, param):
         paths = self.get_fb_selected_paths()
 
@@ -202,6 +184,29 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
                 path = os.path.dirname(path)
 
             self._panel.feed_string('cd '+shlex.quote(path)+'\n')
+
+    def get_active_document_path(self):
+        doc = self.window.get_active_document()
+        if doc:
+            location = doc.get_file().get_location()
+            if location and location.has_uri_scheme("file"):
+                return location.get_path()
+        return None
+
+    def get_active_document_directory(self):
+        doc = self.get_active_document_path()
+        if doc:
+            return os.path.dirname(doc)
+        return None
+
+    def focus_terminal(self):
+        self.window.get_bottom_panel().set_visible_child_name("GeditTerminalEnhancedPanel")
+        self._panel.grab_focus()
+
+    def on_vte_file_clicked(self, term, filename, line):
+        if os.path.exists(filename):
+            gio_file = Gio.File.new_for_path(filename)
+            Gedit.commands_load_location(self.window, gio_file, None, line, -1)
 
 
 # Let's conform to PEP8
