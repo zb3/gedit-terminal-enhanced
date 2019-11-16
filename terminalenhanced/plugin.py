@@ -101,7 +101,7 @@ class TerminalEnhancedPlugin(GObject.Object, Gedit.WindowActivatable):
         bottom = self.window.get_bottom_panel()
         bottom.remove(self._panel)
 
-        self.unregiser_messages()
+        self.unregister_messages()
         self.uninstall_filebrowser_extension()
 
     def do_update_state(self):
