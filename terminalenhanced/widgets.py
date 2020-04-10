@@ -4,6 +4,8 @@ import re
 from gi.repository import GObject, GLib, Gio, Pango, Gdk, Gtk, Gedit, Vte
 from .settings import Settings
 
+from .workarounds import vte_terminal_event_check_regex_simple
+
 try:
     import gettext
     gettext.bindtextdomain('gedit-plugins')
@@ -164,7 +166,8 @@ class GeditTerminal(Vte.Terminal):
 
     def on_button_press(self, term, event):
         if event.button == 1 and (event.state & Gdk.ModifierType.CONTROL_MASK):
-            has_match, matches = self.event_check_regex_simple(event, [self.CLICK_VREGEX], 0)
+            # event_check_regex_simple can't currently be called via pygobject, so we use a workaround
+            has_match, matches = vte_terminal_event_check_regex_simple(self, event, [self.CLICK_VREGEX], 0)
 
             if has_match:
                 match = self.CLICK_PATTERN.match(matches[0])

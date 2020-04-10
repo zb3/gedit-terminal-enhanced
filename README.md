@@ -8,7 +8,6 @@ Slightly modified version of the original terminal plugin. Modifications include
 * <kbd>Ctrl</kbd> + <kbd>Backspace</kbd> works like <kbd>Ctrl</kbd> + <kbd>W</kbd>
 
 ### Notes
-* <kbd>Ctrl</kbd> + <kbd>Click</kbd> functionality currently requires patched version of PyGObject (see https://gitlab.gnome.org/GNOME/pygobject/issues/366)
 * File names are read as relative to current working directory of the terminal process, so when it changes, previous names won't work.
 * It currently uses linux-specific `/proc/PID/cwd` to get the cwd of the terminal process.
 
